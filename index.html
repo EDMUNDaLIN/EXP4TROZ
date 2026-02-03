@@ -1,180 +1,163 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-<meta charset="UTF-8">
-<title>練功經驗計算器</title>
-<style>
-  body {
-    font-family: system-ui, -apple-system, "Microsoft JhengHei", sans-serif;
-    background: #f5f6f8;
-    padding: 30px;
-  }
-  .box {
-    max-width: 520px;
-    background: #fff;
-    padding: 20px 24px;
-    border-radius: 10px;
-    box-shadow: 0 4px 12px rgba(0,0,0,.08);
-  }
-  h2 { margin-top: 0; font-size: 20px; }
-  label { display: block; margin-top: 14px; font-size: 14px; }
-  input {
-    width: 100%;
-    padding: 8px 10px;
-    margin-top: 4px;
-    font-size: 15px;
-  }
-  button {
-    margin-top: 18px;
-    width: 100%;
-    padding: 10px;
-    font-size: 16px;
-    background: #4a6cf7;
-    color: #fff;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-  }
-  pre {
-    margin-top: 18px;
-    background: #f0f2f5;
-    padding: 12px;
-    border-radius: 6px;
-    font-size: 14px;
-    white-space: pre-wrap;
-  }
-  details { margin-top: 14px; }
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 10px;
-    font-size: 13px;
-  }
-  th, td {
-    border-bottom: 1px solid #ddd;
-    padding: 6px 4px;
-    text-align: right;
-  }
-  th:first-child, td:first-child { text-align: left; }
-  th { background: #f6f7f9; }
-</style>
+    <meta charset="UTF-8">
+    <title>練功經驗雙向計算器 v4.1</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: system-ui, -apple-system, "Microsoft JhengHei", sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    </style>
 </head>
 
-<body>
-<div class="box">
-  <h2>練功經驗計算器（EXP 單位：萬 / 小時）</h2>
+<body class="bg-slate-50 p-6">
+    <div class="max-w-xl mx-auto bg-white rounded-3xl shadow-xl overflow-hidden">
+        <div class="bg-slate-900 p-6 text-white">
+            <h2 class="text-xl font-bold">🚀 練功模擬器 v4.1</h2>
+            <p class="text-slate-400 text-sm">支援：等級目標 / 時間推算雙向模式</p>
+        </div>
 
-  <label>打手人數</label>
-  <input type="number" id="carryInput" value="1" min="1">
+        <div class="p-6 space-y-6">
+            <div class="grid grid-cols-2 gap-4 bg-slate-50 p-4 rounded-2xl">
+                <div>
+                    <label class="text-xs font-bold text-slate-500 uppercase">打手 / 被帶人數</label>
+                    <div class="flex items-center gap-2 mt-1">
+                        <input type="number" id="carryInput" value="1" class="w-full p-2 rounded-lg border">
+                        <span class="text-slate-400">/</span>
+                        <input type="number" id="leecherInput" value="1" class="w-full p-2 rounded-lg border">
+                    </div>
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-slate-500 uppercase">單打手 EXP (萬/H)</label>
+                    <input type="number" id="expPerHourInput" value="120" class="w-full mt-1 p-2 rounded-lg border">
+                </div>
+                <div class="col-span-2">
+                    <label class="text-xs font-bold text-slate-500 uppercase">額外經驗加成 (%)</label>
+                    <input type="number" id="bonusInput" value="0" class="w-full mt-1 p-2 rounded-lg border">
+                </div>
+            </div>
 
-  <label>被帶者人數</label>
-  <input type="number" id="leecherInput" value="1" min="0">
+            <div class="space-y-3">
+                <h3 class="font-bold text-slate-700 flex items-center gap-2 border-b pb-2">📍 目前角色進度</h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-xs text-slate-400">起始等級 (LV)</label>
+                        <input type="number" id="lvStartInput" value="60" class="w-full p-2 rounded-lg border bg-blue-50">
+                    </div>
+                    <div>
+                        <label class="text-xs text-slate-400">目前 EXP (%)</label>
+                        <input type="number" id="expPercentInput" value="0" class="w-full p-2 rounded-lg border bg-blue-50">
+                    </div>
+                </div>
+            </div>
 
-  <label>單一打手 EXP（萬 / 小時）</label>
-  <input type="number" id="expPerHourInput" value="120" min="0">
+            <div class="space-y-4">
+                <h3 class="font-bold text-slate-700 border-b pb-2">🎯 選擇計算模式</h3>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="p-4 border-2 border-blue-100 rounded-2xl hover:border-blue-500 transition">
+                        <p class="text-xs font-bold text-blue-600 mb-2">模式 A：我想練到...</p>
+                        <label class="text-xs text-slate-400">目標等級 (LV)</label>
+                        <input type="number" id="lvEndInput" value="70" class="w-full p-2 rounded-lg border">
+                        <button onclick="calcByLevel()" class="w-full mt-3 bg-blue-600 text-white py-2 rounded-xl text-sm font-bold shadow-md active:scale-95 transition">推算所需時間</button>
+                    </div>
 
-  <label>額外經驗加成 (%)</label>
-  <input type="number" id="bonusInput" value="0" min="0">
+                    <div class="p-4 border-2 border-green-100 rounded-2xl hover:border-green-500 transition">
+                        <p class="text-xs font-bold text-green-600 mb-2">模式 B：如果我練...</p>
+                        <label class="text-xs text-slate-400">計畫練功時間 (H)</label>
+                        <input type="number" id="hoursInput" value="24" class="w-full p-2 rounded-lg border">
+                        <button onclick="calcByTime()" class="w-full mt-3 bg-green-600 text-white py-2 rounded-xl text-sm font-bold shadow-md active:scale-95 transition">推算目標等級</button>
+                    </div>
+                </div>
+            </div>
 
-  <hr>
-
-  <label>起始等級 (LV A)</label>
-  <input type="number" id="lvStartInput" value="60" min="1" max="79">
-
-  <label>目前 EXP (%)</label>
-  <input type="number" id="expPercentInput" value="0" min="0" max="99">
-
-  <label>目標等級 (LV B)</label>
-  <input type="number" id="lvEndInput" value="70" min="2" max="80">
-
-  <button onclick="calc()">計算</button>
-
-  <pre id="result">請輸入數值後按「計算」</pre>
-
-  <details>
-    <summary>📊 展開每級明細（含完成時間）</summary>
-    <div id="detailTable"></div>
-  </details>
-</div>
+            <div id="resultBox" class="hidden animate-fade-in">
+                <pre id="result" class="bg-slate-900 text-green-400 p-4 rounded-2xl text-sm leading-relaxed overflow-x-auto"></pre>
+                
+                <details class="mt-4">
+                    <summary class="text-sm font-bold text-slate-500 cursor-pointer hover:text-slate-800 transition">📊 查看升級明細</summary>
+                    <div id="detailTable" class="mt-2 overflow-x-auto custom-scrollbar max-h-60 border rounded-xl text-xs"></div>
+                </details>
+            </div>
+        </div>
+    </div>
 
 <script>
-// expNeed[lv] = LV lv → lv+1 所需 EXP
-const expNeed = [
-  null, 2443,2736,3064,3431,3842,4303,4819,5397,
-  6044,6769,7581,8490,9508,10648,11925,13356,14958,16752,18762,21013,23534,26358,29520,33062,37029,41472,46448,52021,58263,65254,73084,81854,91676,102677,114998,128797,144252,161562,180949,202662,226981,254218,284724,318890,357156,400014,448015,501776,561989,680006,1482156,2178770,3202791,4708104,6920913,10173741,14955400,21984439,32317125,36841522,41999335,47879242,54582336,62223863,70935204,80866132,92187391,105093625,119806732,135381607,152981215,172868773,195341713,220736135,249431833,281857970,318499506,359904442,406692019,455495061,510154468,571373004,639937764,716730295,802737930,899066481,1006954458,1127788992,1263123671];
+const expNeed = [null, 2443,2736,3064,3431,3842,4303,4819,5397,6044,6769,7581,8490,9508,10648,11925,13356,14958,16752,18762,21013,23534,26358,29520,33062,37029,41472,46448,52021,58263,65254,73084,81854,91676,102677,114998,128797,144252,161562,180949,202662,226981,254218,284724,318890,357156,400014,448015,501776,561989,680006,1482156,2178770,3202791,4708104,6920913,10173741,14955400,21984439,32317125,36841522,41999335,47879242,54582336,62223863,70935204,80866132,92187391,105093625,119806732,135381607,152981215,172868773,195341713,220736135,249431833,281857970,318499506,359904442,406692019,455495061,510154468,571373004,639937764,716730295,802737930,899066481,1006954458,1127788992,1263123671];
 
-function formatTime(d) {
-  return d.toLocaleString();
+function getBaseData() {
+    const carry = Number(document.getElementById("carryInput").value);
+    const leecher = Number(document.getElementById("leecherInput").value);
+    const expPH = Number(document.getElementById("expPerHourInput").value) * 10000;
+    const bonus = Number(document.getElementById("bonusInput").value) / 100;
+    const leecherExpPH = (carry * expPH * (1 + bonus)) / (carry + leecher);
+    return {
+        lvStart: Number(document.getElementById("lvStartInput").value),
+        expPct: Number(document.getElementById("expPercentInput").value) / 100,
+        leecherExpPH
+    };
 }
 
-function calc() {
-  const carryVal   = Number(document.getElementById("carryInput").value);
-  const leecherVal = Number(document.getElementById("leecherInput").value);
-  const expPH      = Number(document.getElementById("expPerHourInput").value) * 10000;
-  const bonus      = Number(document.getElementById("bonusInput").value) / 100;
-  const lvStart    = Number(document.getElementById("lvStartInput").value);
-  const lvEnd      = Number(document.getElementById("lvEndInput").value);
-  const expPct     = Number(document.getElementById("expPercentInput").value) / 100;
+// 模式 A：目標等級推算時間 (原邏輯優化)
+function calcByLevel() {
+    const { lvStart, expPct, leecherExpPH } = getBaseData();
+    const lvEnd = Number(document.getElementById("lvEndInput").value);
+    
+    if (lvStart >= lvEnd) return alert("目標等級必須大於起始等級");
 
-  if (carryVal <= 0 || carryVal + leecherVal <= 0) {
-    result.textContent = "❌ 人數設定不正確";
-    return;
-  }
-  if (lvStart >= lvEnd) {
-    result.textContent = "❌ 起始等級必須小於目標等級";
-    return;
-  }
+    let totalHours = 0;
+    let rows = "";
+    let currentTime = new Date();
 
-  const leecherExpPH =
-    (carryVal * expPH * (1 + bonus)) / (carryVal + leecherVal);
-
-  let now = new Date();
-  let currentTime = new Date(now);
-  let totalHours = 0;
-  let rows = "";
-
-  for (let lv = lvStart; lv < lvEnd; lv++) {
-    let needExp = expNeed[lv];
-    if (lv === lvStart && expPct > 0) {
-      needExp *= (1 - expPct);
+    for (let lv = lvStart; lv < lvEnd; lv++) {
+        let needExp = expNeed[lv];
+        if (lv === lvStart) needExp *= (1 - expPct);
+        
+        const h = needExp / leecherExpPH;
+        totalHours += h;
+        currentTime = new Date(currentTime.getTime() + h * 3600000);
+        rows += `<tr><td class="p-2 border-b">LV ${lv}→${lv+1}</td><td class="p-2 border-b">${(needExp/10000).toFixed(2)}萬</td><td class="p-2 border-b text-blue-600 font-bold">${h.toFixed(2)}h</td></tr>`;
     }
 
-    const hours = needExp / leecherExpPH;
-    totalHours += hours;
-    currentTime = new Date(currentTime.getTime() + hours * 3600000);
+    showResult(`[模式 A：等級目標]\n預計總耗時：${totalHours.toFixed(2)} 小時\n完成日期：${currentTime.toLocaleString()}\n每小時獲得：${(leecherExpPH/10000).toFixed(2)} 萬`, rows);
+}
 
-    rows += `
-      <tr>
-        <td>LV ${lv} → ${lv + 1}</td>
-        <td>${(needExp / 10000).toFixed(2)}</td>
-        <td>${hours.toFixed(2)}</td>
-        <td>${formatTime(currentTime)}</td>
-      </tr>
-    `;
-  }
+// 模式 B：時間推算等級 (新功能)
+function calcByTime() {
+    const { lvStart, expPct, leecherExpPH } = getBaseData();
+    const hours = Number(document.getElementById("hoursInput").value);
+    
+    if (hours <= 0) return alert("請輸入有效的練功時間");
 
-  result.textContent =
-`目前時間：${formatTime(now)}
+    let totalExpGain = leecherExpPH * hours;
+    let currentLv = lvStart;
+    let currentExpPct = expPct;
+    let rows = "";
 
-被帶者 EXP / H：${(leecherExpPH / 10000).toFixed(2)} 萬
+    while (totalExpGain > 0 && currentLv < expNeed.length - 1) {
+        let needExpToNext = expNeed[currentLv] * (1 - currentExpPct);
+        
+        if (totalExpGain >= needExpToNext) {
+            // 足以升級
+            totalExpGain -= needExpToNext;
+            rows += `<tr><td class="p-2 border-b text-green-600 font-bold">LV ${currentLv} 🚀 UP!</td><td class="p-2 border-b" colspan="2">升級完成</td></tr>`;
+            currentLv++;
+            currentExpPct = 0;
+        } else {
+            // 經驗用完，計算最終 % 數
+            currentExpPct += totalExpGain / expNeed[currentLv];
+            totalExpGain = 0;
+        }
+    }
 
-LV ${lvStart}（${(expPct*100).toFixed(0)}%） → LV ${lvEnd}
-總練功時間：約 ${totalHours.toFixed(2)} 小時
-預計完成時間：${formatTime(currentTime)}`;
+    showResult(`[模式 B：時間推算]\n在 ${hours} 小時後...\n預計等級：LV ${currentLv}\n預計進度：${(currentExpPct * 100).toFixed(2)} %\n總獲得 EXP：${(leecherExpPH * hours / 10000).toFixed(2)} 萬`, rows);
+}
 
-  document.getElementById("detailTable").innerHTML = `
-    <table>
-      <thead>
-        <tr>
-          <th>等級</th>
-          <th>剩餘 EXP（萬）</th>
-          <th>小時</th>
-          <th>完成時間</th>
-        </tr>
-      </thead>
-      <tbody>${rows}</tbody>
-    </table>
-  `;
+function showResult(text, tableRows) {
+    document.getElementById("resultBox").classList.remove("hidden");
+    document.getElementById("result").textContent = text;
+    document.getElementById("detailTable").innerHTML = `<table class="w-full text-left bg-white"><thead><tr class="bg-slate-100 text-[10px] uppercase font-bold text-slate-500"><th class="p-2">進度</th><th class="p-2">經驗</th><th class="p-2">耗時</th></tr></thead><tbody>${tableRows}</tbody></table>`;
 }
 </script>
 </body>
