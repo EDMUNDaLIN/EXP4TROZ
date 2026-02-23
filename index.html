@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
-    <title>練功經驗雙向計算器 v4.1</title>
+    <title>練功經驗雙向計算器 v4.2</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { font-family: system-ui, -apple-system, "Microsoft JhengHei", sans-serif; }
@@ -14,8 +14,8 @@
 <body class="bg-slate-50 p-6">
     <div class="max-w-xl mx-auto bg-white rounded-3xl shadow-xl overflow-hidden">
         <div class="bg-slate-900 p-6 text-white">
-            <h2 class="text-xl font-bold">🚀 練功模擬器 v4.1</h2>
-            <p class="text-slate-400 text-sm">支援：等級目標 / 時間推算雙向模式</p>
+            <h2 class="text-xl font-bold">🚀 練功模擬器 v4.2</h2>
+            <p class="text-slate-400 text-sm">支援：動態單位顯示 (萬/百萬/千萬/億)</p>
         </div>
 
         <div class="p-6 space-y-6">
@@ -73,7 +73,7 @@
             </div>
 
             <div id="resultBox" class="hidden animate-fade-in">
-                <pre id="result" class="bg-slate-900 text-green-400 p-4 rounded-2xl text-sm leading-relaxed overflow-x-auto"></pre>
+                <pre id="result" class="bg-slate-900 text-green-400 p-4 rounded-2xl text-sm leading-relaxed overflow-x-auto font-mono"></pre>
                 
                 <details class="mt-4">
                     <summary class="text-sm font-bold text-slate-500 cursor-pointer hover:text-slate-800 transition">📊 查看升級明細</summary>
@@ -85,6 +85,18 @@
 
 <script>
 const expNeed = [null,2443,2711,3009,3339,3706,4113,4565,5067,5624,6242,6928,7690,8535,9473,10515,11671,12954,14378,15959,17714,19662,21824,24224,26888,29845,33127,36770,40814,45303,50286,55817,61956,68771,76335,84731,94051,104396,115879,128625,142773,158478,175910,195260,216738,240579,267042,296416,329021,365213,434603,1037509,1525139,2241953,3295672,4844639,7121618,10468780,15389107,22621987,25789065,29399534,33515469,38207635,43556704,49654642,56606292,64531173,73565537,83864712,94767124,107086850,121008141,136739199,154515294,174602283,197300579,222949654,251933109,284684413,318846542,357108127,399961102,447956434,501711206,561916551,629346536,704868120,789452294,884186569,1061023882,1273228658,1527874389,1833449266,2200139119,2640166942,3168200330,3801840396,4562208475];
+
+/**
+ * 動態格式化經驗值單位
+ * @param {number} val 原始經驗值數值
+ */
+function formatExp(val) {
+    if (val < 10000) return val.toFixed(0);
+    if (val < 1000000) return (val / 10000).toFixed(2) + " 萬";
+    if (val < 10000000) return (val / 1000000).toFixed(2) + " 百萬";
+    if (val < 100000000) return (val / 10000000).toFixed(2) + " 千萬";
+    return (val / 100000000).toFixed(3) + " 億";
+}
 
 function getBaseData() {
     const carry = Number(document.getElementById("carryInput").value);
@@ -99,7 +111,6 @@ function getBaseData() {
     };
 }
 
-// 模式 A：目標等級推算時間 (原邏輯優化)
 function calcByLevel() {
     const { lvStart, expPct, leecherExpPH } = getBaseData();
     const lvEnd = Number(document.getElementById("lvEndInput").value);
@@ -117,13 +128,12 @@ function calcByLevel() {
         const h = needExp / leecherExpPH;
         totalHours += h;
         currentTime = new Date(currentTime.getTime() + h * 3600000);
-        rows += `<tr><td class="p-2 border-b">LV ${lv}→${lv+1}</td><td class="p-2 border-b">${(needExp/10000).toFixed(2)}萬</td><td class="p-2 border-b text-blue-600 font-bold">${h.toFixed(2)}h</td></tr>`;
+        rows += `<tr><td class="p-2 border-b">LV ${lv}→${lv+1}</td><td class="p-2 border-b">${formatExp(needExp)}</td><td class="p-2 border-b text-blue-600 font-bold">${h.toFixed(2)}h</td></tr>`;
     }
 
-    showResult(`[模式 A：等級目標]\n預計總耗時：${totalHours.toFixed(2)} 小時\n完成日期：${currentTime.toLocaleString()}\n每小時獲得：${(leecherExpPH/10000).toFixed(2)} 萬`, rows);
+    showResult(`[模式 A：等級目標]\n預計總耗時：${totalHours.toFixed(2)} 小時\n完成日期：${currentTime.toLocaleString()}\n每小時獲得：${formatExp(leecherExpPH)}`, rows);
 }
 
-// 模式 B：時間推算等級 (新功能)
 function calcByTime() {
     const { lvStart, expPct, leecherExpPH } = getBaseData();
     const hours = Number(document.getElementById("hoursInput").value);
@@ -131,6 +141,7 @@ function calcByTime() {
     if (hours <= 0) return alert("請輸入有效的練功時間");
 
     let totalExpGain = leecherExpPH * hours;
+    let totalExpStatic = totalExpGain; // 保留原始數值用於顯示
     let currentLv = lvStart;
     let currentExpPct = expPct;
     let rows = "";
@@ -139,27 +150,24 @@ function calcByTime() {
         let needExpToNext = expNeed[currentLv] * (1 - currentExpPct);
         
         if (totalExpGain >= needExpToNext) {
-            // 足以升級
             totalExpGain -= needExpToNext;
-            rows += `<tr><td class="p-2 border-b text-green-600 font-bold">LV ${currentLv} 🚀 UP!</td><td class="p-2 border-b" colspan="2">升級完成</td></tr>`;
+            rows += `<tr><td class="p-2 border-b text-green-600 font-bold">LV ${currentLv} 🚀 UP!</td><td class="p-2 border-b" colspan="2">升級完成 (需 ${formatExp(expNeed[currentLv])})</td></tr>`;
             currentLv++;
             currentExpPct = 0;
         } else {
-            // 經驗用完，計算最終 % 數
             currentExpPct += totalExpGain / expNeed[currentLv];
             totalExpGain = 0;
         }
     }
 
-    showResult(`[模式 B：時間推算]\n在 ${hours} 小時後...\n預計等級：LV ${currentLv}\n預計進度：${(currentExpPct * 100).toFixed(2)} %\n總獲得 EXP：${(leecherExpPH * hours / 10000).toFixed(2)} 萬`, rows);
+    showResult(`[模式 B：時間推算]\n在 ${hours} 小時後...\n預計等級：LV ${currentLv}\n預計進度：${(currentExpPct * 100).toFixed(2)} %\n總獲得 EXP：${formatExp(totalExpStatic)}`, rows);
 }
 
 function showResult(text, tableRows) {
     document.getElementById("resultBox").classList.remove("hidden");
     document.getElementById("result").textContent = text;
-    document.getElementById("detailTable").innerHTML = `<table class="w-full text-left bg-white"><thead><tr class="bg-slate-100 text-[10px] uppercase font-bold text-slate-500"><th class="p-2">進度</th><th class="p-2">經驗</th><th class="p-2">耗時</th></tr></thead><tbody>${tableRows}</tbody></table>`;
+    document.getElementById("detailTable").innerHTML = `<table class="w-full text-left bg-white"><thead><tr class="bg-slate-100 text-[10px] uppercase font-bold text-slate-500"><th class="p-2">進度</th><th class="p-2">所需經驗</th><th class="p-2">耗時</th></tr></thead><tbody>${tableRows}</tbody></table>`;
 }
 </script>
 </body>
-
 </html>
