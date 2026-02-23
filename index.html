@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
-    <title>練功經驗雙向計算器 v4.2</title>
+    <title>練功經驗雙向計算器 v4.3</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { font-family: system-ui, -apple-system, "Microsoft JhengHei", sans-serif; }
@@ -14,8 +14,8 @@
 <body class="bg-slate-50 p-6">
     <div class="max-w-xl mx-auto bg-white rounded-3xl shadow-xl overflow-hidden">
         <div class="bg-slate-900 p-6 text-white">
-            <h2 class="text-xl font-bold">🚀 練功模擬器 v4.2</h2>
-            <p class="text-slate-400 text-sm">支援：動態單位顯示 (萬/百萬/千萬/億)</p>
+            <h2 class="text-xl font-bold">🚀 練功模擬器 v4.3</h2>
+            <p class="text-slate-400 text-sm">支援：動態單位顯示 (萬/百萬/千萬/億/十億/百億/千億/兆/十兆/百兆)</p>
         </div>
 
         <div class="p-6 space-y-6">
@@ -92,10 +92,15 @@ const expNeed = [null,2443,2711,3009,3339,3706,4113,4565,5067,5624,6242,6928,769
  */
 function formatExp(val) {
     if (val < 10000) return val.toFixed(0);
-    if (val < 1000000) return (val / 10000).toFixed(2) + " 萬";
-    if (val < 10000000) return (val / 1000000).toFixed(2) + " 百萬";
-    if (val < 100000000) return (val / 10000000).toFixed(2) + " 千萬";
-    return (val / 100000000).toFixed(3) + " 億";
+    const units = [
+        { d: 1e14, l: "百兆" }, { d: 1e13, l: "十兆" }, { d: 1e12, l: "兆" },
+        { d: 1e11, l: "千億" }, { d: 1e10, l: "百億" }, { d: 1e9, l: "十億" },
+        { d: 1e8, l: "億" }, { d: 1e7, l: "千萬" }, { d: 1e6, l: "百萬" }, { d: 1e4, l: "萬" }
+    ];
+    for (const u of units) {
+        if (val >= u.d) return (val / u.d).toFixed(2) + " " + u.l;
+    }
+    return val.toFixed(0);
 }
 
 function getBaseData() {
@@ -128,7 +133,7 @@ function calcByLevel() {
         const h = needExp / leecherExpPH;
         totalHours += h;
         currentTime = new Date(currentTime.getTime() + h * 3600000);
-        rows += `<tr><td class="p-2 border-b">LV ${lv}→${lv+1}</td><td class="p-2 border-b">${formatExp(needExp)}</td><td class="p-2 border-b text-blue-600 font-bold">${h.toFixed(2)}h</td></tr>`;
+        rows += `<tr><td class="p-2 border-b">LV ${lv}→${lv+1}</td><td class="p-2 border-b">${formatExp(needExp)}</td><td class="p-2 border-b text-blue-600 font-bold">${h.toFixed(2)}h</td><td class="p-2 border-b text-slate-500">${currentTime.toLocaleTimeString([], {hour: "2-digit", minute:"2-digit"})}</td></tr>`;
     }
 
     showResult(`[模式 A：等級目標]\n預計總耗時：${totalHours.toFixed(2)} 小時\n完成日期：${currentTime.toLocaleString()}\n每小時獲得：${formatExp(leecherExpPH)}`, rows);
@@ -151,7 +156,7 @@ function calcByTime() {
         
         if (totalExpGain >= needExpToNext) {
             totalExpGain -= needExpToNext;
-            rows += `<tr><td class="p-2 border-b text-green-600 font-bold">LV ${currentLv} 🚀 UP!</td><td class="p-2 border-b" colspan="2">升級完成 (需 ${formatExp(expNeed[currentLv])})</td></tr>`;
+            rows += `<tr><td class="p-2 border-b text-green-600 font-bold">LV ${currentLv} 🚀 UP!</td><td class="p-2 border-b" colspan="3">升級完成 (需 ${formatExp(expNeed[currentLv])})</td></tr>`;
             currentLv++;
             currentExpPct = 0;
         } else {
@@ -166,7 +171,7 @@ function calcByTime() {
 function showResult(text, tableRows) {
     document.getElementById("resultBox").classList.remove("hidden");
     document.getElementById("result").textContent = text;
-    document.getElementById("detailTable").innerHTML = `<table class="w-full text-left bg-white"><thead><tr class="bg-slate-100 text-[10px] uppercase font-bold text-slate-500"><th class="p-2">進度</th><th class="p-2">所需經驗</th><th class="p-2">耗時</th></tr></thead><tbody>${tableRows}</tbody></table>`;
+    document.getElementById("detailTable").innerHTML = `<table class="w-full text-left bg-white"><thead><tr class="bg-slate-100 text-[10px] uppercase font-bold text-slate-500"><th class="p-2">進度</th><th class="p-2">所需經驗</th><th class="p-2">耗時</th><th class="p-2">時間點</th></tr></thead><tbody>${tableRows}</tbody></table>`;
 }
 </script>
 </body>
